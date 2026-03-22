@@ -7,7 +7,7 @@ const router = express.Router();
 // Get all inventory items for logged-in user
 router.get("/", requireAuth, async (req, res) => {
   try {
-    const products = await Product.find({ userId: req.session.userId });
+    const products = await Product.find({ userId: req.userId });
     res.json(products);
   } catch (err) {
     console.error("Fetch inventory error:", err);
@@ -25,7 +25,7 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Product is expired and cannot be added." });
     }
 
-    const exists = await Product.findOne({ id: Number(id), userId: req.session.userId });
+    const exists = await Product.findOne({ id: Number(id), userId: req.userId });
     if (exists) {
       return res.status(400).json({ error: "Product with this ID already exists" });
     }
@@ -36,7 +36,7 @@ router.post("/", requireAuth, async (req, res) => {
       price: Number(price),
       quantity: Number(quantity),
       expire,
-      userId: req.session.userId,
+      userId: req.userId,
     });
 
     res.status(201).json(product);
@@ -58,7 +58,7 @@ router.put("/:id", requireAuth, async (req, res) => {
     }
 
     const result = await Product.updateOne(
-      { _id: id, userId: req.session.userId },
+      { _id: id, userId: req.userId },
       { $set: { name, price, quantity, expire } }
     );
 
@@ -76,7 +76,7 @@ router.put("/:id", requireAuth, async (req, res) => {
 // Delete a product
 router.delete("/:id", requireAuth, async (req, res) => {
   try {
-    await Product.deleteOne({ _id: req.params.id, userId: req.session.userId });
+    await Product.deleteOne({ _id: req.params.id, userId: req.userId });
     res.json({ message: "Product deleted successfully" });
   } catch (err) {
     console.error("Delete product error:", err);

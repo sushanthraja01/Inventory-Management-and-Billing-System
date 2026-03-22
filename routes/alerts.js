@@ -7,7 +7,7 @@ const router = express.Router();
 // Get alerts data (expired + expiring soon products)
 router.get("/", requireAuth, async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const userId = req.userId;
     const today = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(today.getDate() + 7);

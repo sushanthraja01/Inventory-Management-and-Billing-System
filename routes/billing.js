@@ -7,7 +7,7 @@ const router = express.Router();
 // Get product by ID or name
 router.post("/getProduct", requireAuth, async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const userId = req.userId;
     const { identifier } = req.body;
 
     const query = isNaN(identifier)
@@ -25,7 +25,7 @@ router.post("/getProduct", requireAuth, async (req, res) => {
 // Update inventory quantity (for billing)
 router.post("/updateInventory", requireAuth, async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const userId = req.userId;
     const { productId, qtyChange } = req.body;
 
     const product = await Product.findOne({ _id: productId, userId });
@@ -45,7 +45,7 @@ router.post("/updateInventory", requireAuth, async (req, res) => {
 router.get("/suggestions", requireAuth, async (req, res) => {
   try {
     const query = req.query.q || "";
-    const userId = req.session.userId;
+    const userId = req.userId;
 
     if (query.length === 0) {
       return res.json([]);
@@ -69,7 +69,7 @@ router.get("/suggestions", requireAuth, async (req, res) => {
 router.post("/products/id/:id", requireAuth, async (req, res) => {
   try {
     const { quantity } = req.body;
-    const userId = req.session.userId;
+    const userId = req.userId;
     const productId = Number(req.params.id);
 
     const product = await Product.findOne({ id: productId, userId });
@@ -88,7 +88,7 @@ router.post("/products/id/:id", requireAuth, async (req, res) => {
 router.post("/products/name/:name", requireAuth, async (req, res) => {
   try {
     const { quantity } = req.body;
-    const userId = req.session.userId;
+    const userId = req.userId;
     const name = req.params.name;
 
     const product = await Product.findOne({ name, userId });

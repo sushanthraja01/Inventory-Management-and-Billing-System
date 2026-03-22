@@ -1,7 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Product = require("../models/Product");
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -39,7 +41,12 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    req.session.userId = user._id;
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     // Check for expiry alerts
     const today = new Date();
@@ -51,33 +58,32 @@ router.post("/login", async (req, res) => {
 
     const hasAlerts = expiredProducts.length > 0 || expiringSoon.length > 0;
 
-    res.json({ message: "Login successful", hasAlerts });
+    res.json({
+      message: "Login successful",
+      token,
+      user: { name: user.name, email: user.email },
+      hasAlerts,
+    });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Server error during login" });
   }
 });
 
-// Logout
+// Logout (client-side only now — just an acknowledgement endpoint)
 router.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) return res.status(500).json({ error: "Logout failed" });
-    res.json({ message: "Logged out successfully" });
-  });
+  res.json({ message: "Logged out successfully" });
 });
 
-// Check login status
-router.get("/check-login-status", (req, res) => {
-  res.json({ loggedIn: !!req.session.userId });
+// Verify token (replaces check-login-status)
+router.get("/verify", requireAuth, (req, res) => {
+  res.json({ loggedIn: true });
 });
 
 // Get user profile
-router.get("/user/profile", async (req, res) => {
+router.get("/user/profile", requireAuth, async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Not logged in" });
-    }
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
